@@ -92,10 +92,12 @@ Chapter 2 — Database & Prisma Models
 
 - [ ] Classification service
 - [ ] Python FastAPI integration
+- [ ] Integrate TypeSafe Jev for structured decisions
 - [ ] Initial categories
-- [ ] Confidence score
-- [ ] Type-safe classification result
+- [ ] Define typed Jev questions and classification answer contracts
+- [ ] Capture category probabilities and confidence
 - [ ] Custom categories
+- [ ] Configure Jev API access without exposing credentials
 
 ---
 
@@ -107,7 +109,11 @@ Chapter 2 — Database & Prisma Models
 - [ ] Fallback providers
 - [ ] Provider capability checking
 - [ ] Rate-limit checking
-- [ ] Routing decision engine
+- [ ] Build eligible provider/model candidates from deterministic rules
+- [ ] Use Jev Choice to select a route from eligible candidates
+- [ ] Validate Jev's typed selection against the eligible candidate set
+- [ ] Define confidence handling and fallback re-selection behavior
+- [ ] Persist route decision metadata for usage and analytics
 
 ---
 

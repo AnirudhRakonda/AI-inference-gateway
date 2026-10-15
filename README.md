@@ -8,11 +8,16 @@ Chapters 1 and 2 add registration/login, cookie-based authentication, role-prote
 
 ## Proposed architecture
 
+### User roles and use cases
+
+See [User Roles, Access, and Use Cases](docs/user-roles-and-use-cases.md) for
+the target end-state access matrix, inference flow, and use-case diagram.
+
 ### Monorepo layout
 
 - apps/web — Next.js + React + Tailwind frontend
 - apps/api — Node.js + TypeScript backend (Fastify or NestJS)
-- apps/ai-service — Python + FastAPI service for classification, guardrails, and future ML/routing intelligence
+- apps/ai-service — Python + FastAPI integration for TypeSafe Jev structured classification and routing decisions
 - packages/types — shared TypeScript domain types and schema contracts
 - packages/config — environment and configuration helpers
 - packages/llm-providers — provider adapters and registry
@@ -25,7 +30,7 @@ Chapters 1 and 2 add registration/login, cookie-based authentication, role-prote
 ### Core principles
 
 1. Provider abstraction first: no provider-specific code in the routing engine.
-2. Type-safe contracts: use Zod or equivalent validation for structured prompt classification and routing decisions.
+2. TypeSafe Jev makes typed classification and route-choice decisions; application code constrains, validates, and acts on those decisions.
 3. Security by design: encrypted credential storage, no raw key logging, RBAC, rate limiting, and sanitized observability.
 4. Incremental delivery: each chapter adds a small, testable slice of the system.
 
@@ -33,7 +38,7 @@ Chapters 1 and 2 add registration/login, cookie-based authentication, role-prote
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui
 - API backend: Node.js + TypeScript + Fastify or NestJS
-- AI service: Python + FastAPI
+- AI decision service: Python + FastAPI with TypeSafe Jev
 - Database: PostgreSQL + Prisma
 - Cache / rate limiting: Redis
 - Container orchestration: Docker Compose
