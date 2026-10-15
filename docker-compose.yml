@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ai_gateway}
+      POSTGRES_USER: ${POSTGRES_USER:-ai_gateway}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_gateway}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://ai_gateway:ai_gateway@postgres:5432/ai_gateway
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-local-only-change-this-secret-to-32-chars-min}
+      WEB_ORIGIN: http://localhost:3000
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  ai-service:
+    build:
+      context: ./apps/ai-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '8000:8000'
+    depends_on:
+      - redis
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_AI_SERVICE_URL: http://localhost:8000
+      API_INTERNAL_URL: http://api:4000
+      AI_SERVICE_INTERNAL_URL: http://ai-service:8000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+      - ai-service
+
+volumes:
+  postgres_data:

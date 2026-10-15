@@ -194,6 +194,22 @@ cython_debug/
 #   Learn more at https://abstra.io/docs
 .abstra/
 
+# Node / Next.js
+node_modules/
+.next/
+out/
+.npm/
+.pnpm-store/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
 # Visual Studio Code
 #   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore

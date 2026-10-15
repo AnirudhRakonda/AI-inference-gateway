@@ -1,0 +1,23 @@
+{
+  "name": "ai-inference-gateway",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "npm run prisma:generate --workspace @aiinference/api",
+    "db:migrate": "npm run prisma:migrate:dev --workspace @aiinference/api",
+    "db:seed": "npm run prisma:seed --workspace @aiinference/api",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "prettier": "^3.3.4",
+    "typescript": "^5.5.4"
+  }
+}
