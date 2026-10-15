@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import LlmPlayground from './llm-playground';
 
 type User = {
   id: string;
@@ -299,6 +300,7 @@ export default function AuthPanel() {
           )}
         </article>
       </div>
+      {user?.role === 'ADMIN' && <LlmPlayground />}
     </section>
   );
 }

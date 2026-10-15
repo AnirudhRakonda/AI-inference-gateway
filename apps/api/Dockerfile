@@ -7,6 +7,7 @@ RUN apk add --no-cache openssl
 COPY package*.json ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
+COPY packages/llm-providers/package.json ./packages/llm-providers/package.json
 RUN npm ci --workspace @aiinference/api --include-workspace-root=false
 
 COPY . .

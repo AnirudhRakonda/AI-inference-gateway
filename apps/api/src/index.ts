@@ -7,6 +7,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { MockProvider, ProviderError } from '@aiinference/llm-providers';
 
 const prisma = new PrismaClient();
 const sessionCookie = 'gateway_session';
@@ -107,6 +108,23 @@ const credentialsSchema = z.object({
 
 const registrationSchema = credentialsSchema.strict();
 const loginSchema = credentialsSchema.strict();
+const mockScenarioSchema = z.enum([
+  'success',
+  'json',
+  'empty',
+  'malformed',
+  'api_error',
+  'rate_limit',
+  'timeout',
+]);
+const playgroundRequestSchema = z
+  .object({
+    prompt: z.string().trim().min(1, 'Prompt is required.').max(12_000),
+    responseFormat: z.enum(['text', 'json']).default('text'),
+    scenario: mockScenarioSchema.default('success'),
+    stream: z.boolean().default(false),
+  })
+  .strict();
 
 function publicUser(user: UserAccount): PublicUser {
   return {
@@ -266,6 +284,85 @@ export function createApp(dependencies: AppDependencies = databaseDependencies) 
       return reply.code(403).send({ error: 'Administrator access required.' });
     }
     return { users: await dependencies.listUsers() };
+  });
+
+  app.post('/admin/llm-playground', async (request, reply) => {
+    try {
+      await request.jwtVerify();
+    } catch {
+      return reply.code(401).send({ error: 'Authentication required.' });
+    }
+
+    const user = await dependencies.findUserById(request.user.sub);
+    if (!user) {
+      reply.clearCookie(sessionCookie, { path: '/' });
+      return reply.code(401).send({ error: 'Authentication required.' });
+    }
+    if (user.role !== 'ADMIN') {
+      return reply.code(403).send({ error: 'Administrator access required.' });
+    }
+
+    const result = playgroundRequestSchema.safeParse(request.body);
+    if (!result.success) {
+      return reply.code(400).send({
+        error: 'Invalid playground request.',
+        details: result.error.flatten().fieldErrors,
+      });
+    }
+
+    const { prompt, responseFormat, scenario, stream } = result.data;
+    const provider = new MockProvider({
+      slug: 'mock',
+      scenario,
+    });
+    const providerRequest = {
+      messages: [{ role: 'user' as const, content: prompt }],
+      responseFormat,
+    };
+
+    try {
+      if (stream) {
+        const iterator = provider.streamText(providerRequest);
+        const firstChunk = await iterator.next();
+        reply.hijack();
+        reply.raw.writeHead(200, {
+          'Content-Type': 'application/x-ndjson; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+        });
+        if (!firstChunk.done) {
+          reply.raw.write(`${JSON.stringify(firstChunk.value)}\n`);
+        }
+        while (true) {
+          const nextChunk = await iterator.next();
+          if (nextChunk.done) break;
+          reply.raw.write(`${JSON.stringify(nextChunk.value)}\n`);
+        }
+        reply.raw.end();
+        return reply;
+      }
+
+      const response = await provider.generateText(providerRequest);
+      return {
+        provider: response.provider,
+        model: response.model,
+        text: response.text,
+        finishReason: response.finishReason,
+        usage: response.usage,
+        scenario: response.metadata?.scenario,
+      };
+    } catch (error) {
+      if (error instanceof ProviderError) {
+        const status = error.code === 'RATE_LIMIT' ? 429 : error.code === 'TIMEOUT' ? 504 : 502;
+        return reply.code(status).send({
+          error: error.message,
+          code: error.code,
+          retryable: error.retryable,
+        });
+      }
+      app.log.error({ err: error }, 'Mock LLM playground request failed');
+      return reply.code(500).send({ error: 'Mock LLM request failed.' });
+    }
   });
 
   return app;

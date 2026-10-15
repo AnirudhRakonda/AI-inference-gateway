@@ -1,12 +1,6 @@
 # Project TODO
 
-## Current Chapter
 
-Chapter 2 — Database & Prisma Models
-
-## Status
-
-✅ Complete
 
 ---
 
@@ -56,13 +50,13 @@ Chapter 2 — Database & Prisma Models
 
 # Chapter 3
 
-- [ ] Define LLMProvider abstraction
-- [ ] Provider registry
-- [ ] Mock provider
-- [ ] First real provider
-- [ ] Streaming abstraction
-- [ ] Error handling
-- [ ] Provider capability metadata
+- [x] Define LLMProvider abstraction
+- [x] Provider registry
+- [x] Mock provider
+- [x] First real provider
+- [x] Streaming abstraction
+- [x] Error handling
+- [x] Provider capability metadata
 
 ---
 
@@ -236,3 +230,13 @@ Chapter 2 — Database & Prisma Models
 - Added an interactive dashboard for API, AI-service, database, account, role, and admin-route status.
 - Configured Docker Compose to wait for PostgreSQL and apply migrations before starting the API.
 - Added an explicit environment-driven admin seed command; registrations cannot assign themselves the admin role.
+
+## 2026-10-15
+
+### Chapter 3
+
+- Added a shared LLM provider abstraction with typed request, response, stream, and capability metadata.
+- Added a registry for lazy provider discovery and selection by slug.
+- Added a mock provider for local testing and deterministic responses.
+- Added an OpenAI-compatible provider adapter for real provider calls and error wrapping.
+- Added provider streaming and error handling helpers suitable for later route selection and fallback logic.

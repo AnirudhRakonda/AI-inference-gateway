@@ -191,6 +191,12 @@ describe('API health routes', () => {
     const testApp = createApp(createAuthDependencies().dependencies);
     const unauthorized = await testApp.inject({ method: 'GET', url: '/admin/users' });
     expect(unauthorized.statusCode).toBe(401);
+    const unauthorizedPlayground = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      payload: { prompt: 'hello' },
+    });
+    expect(unauthorizedPlayground.statusCode).toBe(401);
 
     const registration = await testApp.inject({
       method: 'POST',
@@ -204,6 +210,13 @@ describe('API health routes', () => {
       headers: { cookie },
     });
     expect(forbidden.statusCode).toBe(403);
+    const forbiddenPlayground = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      headers: { cookie },
+      payload: { prompt: 'hello' },
+    });
+    expect(forbiddenPlayground.statusCode).toBe(403);
     await testApp.close();
   });
 
@@ -231,6 +244,58 @@ describe('API health routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json().users).toHaveLength(1);
     expect(response.json().users[0]).not.toHaveProperty('passwordHash');
+
+    const mockResponse = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      headers: { cookie },
+      payload: { prompt: 'Visual test' },
+    });
+    expect(mockResponse.statusCode).toBe(200);
+    expect(mockResponse.json()).toMatchObject({
+      provider: 'mock',
+      text: 'This is a mocked provider response for the requested prompt. Prompt: Visual test',
+      scenario: 'success',
+    });
+
+    const jsonResponse = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      headers: { cookie },
+      payload: { prompt: 'Return status', scenario: 'json', responseFormat: 'json' },
+    });
+    expect(jsonResponse.statusCode).toBe(200);
+    expect(JSON.parse(jsonResponse.json().text)).toMatchObject({ status: 'ok' });
+
+    const streamingResponse = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      headers: { cookie },
+      payload: { prompt: 'Stream this', stream: true },
+    });
+    expect(streamingResponse.statusCode).toBe(200);
+    const streamChunks = streamingResponse.body
+      .trim()
+      .split('\n')
+      .map((chunk: string) => JSON.parse(chunk));
+    expect(streamChunks.at(-1)).toMatchObject({ done: true });
+
+    const errorResponse = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      headers: { cookie },
+      payload: { prompt: 'test', scenario: 'rate_limit' },
+    });
+    expect(errorResponse.statusCode).toBe(429);
+    expect(errorResponse.json()).toMatchObject({ code: 'RATE_LIMIT', retryable: true });
+
+    const invalidResponse = await testApp.inject({
+      method: 'POST',
+      url: '/admin/llm-playground',
+      headers: { cookie },
+      payload: { prompt: '  ' },
+    });
+    expect(invalidResponse.statusCode).toBe(400);
     await testApp.close();
   });
 });

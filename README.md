@@ -9,7 +9,7 @@ product.
 
 ## Current status
 
-Chapters 1 and 2 add registration/login, cookie-based authentication, role-protected admin routes, the Prisma PostgreSQL data layer, and a live system-health dashboard. The repository includes a Next.js frontend, a Fastify API backend, a FastAPI AI service, and Docker Compose orchestration for PostgreSQL and Redis.
+Chapters 1 and 2 add registration/login, cookie-based authentication, role-protected admin routes, the Prisma PostgreSQL data layer, and a live system-health dashboard. Chapter 3 adds a provider abstraction layer with a registry, deterministic mock scenarios, and an OpenAI-compatible implementation. The repository includes a Next.js frontend, a Fastify API backend, a FastAPI AI service, and Docker Compose orchestration for PostgreSQL and Redis.
 
 ## Proposed architecture
 
@@ -55,7 +55,7 @@ The project is implemented one chapter at a time as requested; see [TODO.md](TOD
 
 ## Run the current dashboard
 
-Copy `.env.example` to `.env`, replace `JWT_SECRET` with a unique value of at least 32 bytes, then start the services with `docker compose up --build`. Open [http://localhost:3000](http://localhost:3000). The current dashboard checks API, AI-service, and PostgreSQL health, shows live database row counts, and lets you create an account or sign in. The API container applies committed Prisma migrations before starting. The public inference endpoint, user API-key management, and Jev-backed routing are planned roadmap work; they are not part of the current dashboard yet.
+Copy `.env.example` to `.env`, replace `JWT_SECRET` with a unique value of at least 32 bytes, then start the services with `docker compose up --build`. Open [http://localhost:3000](http://localhost:3000). The current dashboard checks API, AI-service, and PostgreSQL health, shows live database row counts, and lets you create an account or sign in. Administrators also get a protected mock LLM playground for testing prompts and deterministic responses. The API container applies committed Prisma migrations before starting. The public inference endpoint, user API-key management, and Jev-backed routing are planned roadmap work; they are not part of the current dashboard yet.
 
 New registrations receive the `USER` role. To create or promote an administrator, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your environment and run `npm run db:seed`; this also sets the supplied password for that account. Do not put real credentials in source control. An admin can then sign in to view the registered-user list in the dashboard. The API rechecks the current database role on each admin request. In the target product, users will create gateway API keys in the portal; these are separate from the administrator-managed provider credentials.
 
@@ -63,10 +63,52 @@ For local development, start PostgreSQL and run `npm run db:migrate` from the re
 
 Passwords must be at least 12 characters and no more than 72 UTF-8 bytes; they are hashed with bcrypt. Authentication uses a one-hour, HTTP-only session cookie; the cookie is marked `Secure` in production.
 
+## LLM provider modes
+
+The provider package defaults to `LLM_MODE=mock`, so local tests need no LLM
+API key and cannot accidentally call a paid provider. Select a deterministic
+mock response with `LLM_MOCK_SCENARIO`:
+
+| Scenario                               | Behavior                                                            |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| `success`                              | Returns a stable text response that includes the last user message. |
+| `json`                                 | Returns JSON with `status` and `response` fields.                   |
+| `empty` / `malformed`                  | Returns empty text or intentionally malformed JSON text.            |
+| `api_error` / `rate_limit` / `timeout` | Throws a typed, deterministic provider error.                       |
+
+Set `LLM_MOCK_RESPONSE` to override the default response text in `success` or
+`json` scenarios.
+
+The dashboard includes an admin-only **LLM playground**. Start the app with
+`docker compose up --build`, sign in as an administrator, and use the prompt,
+response format, scenario, and streaming controls to view output directly in
+the page. This protected test route always calls the mock provider and is not
+a public inference endpoint. Create/promote an admin as described above if
+you do not have one.
+
+Run the provider tests with:
+
+```bash
+npm --workspace @aiinference/llm-providers test
+```
+
+To exercise JSON behavior, set `LLM_MOCK_SCENARIO=json` in the local
+environment or Compose `.env`. Invalid or missing messages are rejected by
+the provider before any network request. The mock supports text generation
+and streaming; it does not emulate provider-specific tool calls or vision.
+
+To use the real OpenAI-compatible provider, set `LLM_MODE=real` and
+`OPENAI_API_KEY` in the untracked local `.env` (or runtime environment).
+`OPENAI_BASE_URL` can override the endpoint for another compatible service.
+Real mode fails configuration if the key is missing; mock mode never falls
+back to a real provider, even if an API key happens to be set. Do not commit
+real keys to source control. The future admin credential interface is not
+implemented yet.
+
 ## Security note
 
 The application will not store raw provider API keys in plaintext. Credential encryption, secure secret handling, access control, and audit-safe log policies are core requirements.
 
 ## Next step
 
-Await explicit implementation instructions for the next chapter before writing application code.
+Proceed to Chapter 4: encrypted provider credentials, credential CRUD, connection validation, and secret-safe logging.
