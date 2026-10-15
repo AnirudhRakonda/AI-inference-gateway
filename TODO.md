@@ -79,12 +79,17 @@ Chapter 2 — Database & Prisma Models
 
 # Chapter 5
 
-- [ ] Conversation creation
-- [ ] Message persistence
-- [ ] Context management
-- [ ] Provider-independent message format
-- [ ] Streaming responses
-- [ ] Conversation history
+- [ ] Define the public versioned inference endpoint and request/response contract
+- [ ] Accept plain-text prompts and structured JSON state
+- [ ] Authenticate inference calls with user-owned gateway API keys
+- [ ] Add API-key creation, listing, revocation, rotation, and safe one-time display
+- [ ] Return the selected provider/model and usage metadata without exposing provider credentials
+- [ ] Support streaming and non-streaming provider responses
+- [ ] Persist request metadata, routing decisions, and usage references for analytics
+- [ ] Define optional conversation/context identifiers for multi-turn integrations
+- [ ] Define prompt/response retention, redaction, and privacy policy
+- [ ] Publish API examples and integration documentation
+- [ ] Add an authenticated request playground to the user portal
 
 ---
 
@@ -132,6 +137,7 @@ Chapter 2 — Database & Prisma Models
 
 - [ ] Redis integration
 - [ ] User limits
+- [ ] API-key-level limits and revocation enforcement
 - [ ] Provider limits
 - [ ] Endpoint limits
 - [ ] Configurable limits
@@ -152,21 +158,26 @@ Chapter 2 — Database & Prisma Models
 
 # Chapter 11
 
-- [ ] Usage dashboard
-- [ ] Cost dashboard
-- [ ] Routing configuration
-- [ ] Provider credentials
-- [ ] Prompt flags
-- [ ] Conversation management
+- [ ] User API access portal and endpoint/integration guidance
+- [ ] API-key management interface
+- [ ] Request playground for prompt and JSON-state payloads
+- [ ] User request and usage dashboard
+- [ ] Admin usage and cost dashboard
+- [ ] Admin routing configuration
+- [ ] Admin provider credentials
+- [ ] Admin prompt and safety flags
+- [ ] Admin provider/model and connection management
 
 ---
 
 # Chapter 12
 
 - [ ] User analytics
+- [ ] Request and API-key analytics
 - [ ] Platform token usage
 - [ ] Provider usage
 - [ ] Model usage
+- [ ] Route-selection and fallback analytics
 - [ ] Cost analytics
 - [ ] Guardrail analytics
 - [ ] System health

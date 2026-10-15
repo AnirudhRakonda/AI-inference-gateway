@@ -1,6 +1,11 @@
 # AI Inference Gateway
 
-This repository is the starting point for a production-oriented multi-LLM routing and token analytics platform.
+This repository is the starting point for an API-first, production-oriented
+multi-LLM inference gateway. Developers send prompts or structured JSON state
+to the gateway; TypeSafe Jev classifies requests and selects an eligible route,
+and the gateway returns the selected LLM provider's response. A web portal
+supports account access and administration rather than serving as a chat-first
+product.
 
 ## Current status
 
@@ -11,11 +16,11 @@ Chapters 1 and 2 add registration/login, cookie-based authentication, role-prote
 ### User roles and use cases
 
 See [User Roles, Access, and Use Cases](docs/user-roles-and-use-cases.md) for
-the target end-state access matrix, inference flow, and use-case diagram.
+the target end-state access matrix, API request flow, and use-case diagram.
 
 ### Monorepo layout
 
-- apps/web — Next.js + React + Tailwind frontend
+- apps/web — Next.js + React + Tailwind user and admin portal, API-key management, integration guidance, and request playground
 - apps/api — Node.js + TypeScript backend (Fastify or NestJS)
 - apps/ai-service — Python + FastAPI integration for TypeSafe Jev structured classification and routing decisions
 - packages/types — shared TypeScript domain types and schema contracts
@@ -29,10 +34,11 @@ the target end-state access matrix, inference flow, and use-case diagram.
 
 ### Core principles
 
-1. Provider abstraction first: no provider-specific code in the routing engine.
-2. TypeSafe Jev makes typed classification and route-choice decisions; application code constrains, validates, and acts on those decisions.
-3. Security by design: encrypted credential storage, no raw key logging, RBAC, rate limiting, and sanitized observability.
-4. Incremental delivery: each chapter adds a small, testable slice of the system.
+1. API-first integration: users call the gateway endpoint from their own applications; the gateway never exposes provider credentials.
+2. Provider abstraction first: no provider-specific code in the routing engine.
+3. TypeSafe Jev makes typed classification and route-choice decisions; application code constrains, validates, and acts on those decisions.
+4. Security by design: encrypted provider credentials, revocable user API keys, no secret logging, RBAC, rate limiting, and sanitized observability.
+5. Incremental delivery: each chapter adds a small, testable slice of the system.
 
 ### Proposed stack
 
@@ -47,11 +53,11 @@ the target end-state access matrix, inference flow, and use-case diagram.
 
 The project is implemented one chapter at a time as requested; see [TODO.md](TODO.md) for current progress.
 
-## Run the dashboard
+## Run the current dashboard
 
-Copy `.env.example` to `.env`, replace `JWT_SECRET` with a unique value of at least 32 bytes, then start the services with `docker compose up --build`. Open [http://localhost:3000](http://localhost:3000). The dashboard checks API, AI-service, and PostgreSQL health, shows live database row counts, and lets you create an account or sign in. The API container applies committed Prisma migrations before starting.
+Copy `.env.example` to `.env`, replace `JWT_SECRET` with a unique value of at least 32 bytes, then start the services with `docker compose up --build`. Open [http://localhost:3000](http://localhost:3000). The current dashboard checks API, AI-service, and PostgreSQL health, shows live database row counts, and lets you create an account or sign in. The API container applies committed Prisma migrations before starting. The public inference endpoint, user API-key management, and Jev-backed routing are planned roadmap work; they are not part of the current dashboard yet.
 
-New registrations receive the `USER` role. To create or promote an administrator, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your environment and run `npm run db:seed`; this also sets the supplied password for that account. Do not put real credentials in source control. An admin can then sign in to view the registered-user list in the dashboard. The API rechecks the current database role on each admin request.
+New registrations receive the `USER` role. To create or promote an administrator, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your environment and run `npm run db:seed`; this also sets the supplied password for that account. Do not put real credentials in source control. An admin can then sign in to view the registered-user list in the dashboard. The API rechecks the current database role on each admin request. In the target product, users will create gateway API keys in the portal; these are separate from the administrator-managed provider credentials.
 
 For local development, start PostgreSQL and run `npm run db:migrate` from the repository root before starting the API. Set `DATABASE_URL`, `JWT_SECRET`, and `WEB_ORIGIN` as described in `.env.example`. `npm run db:generate` regenerates Prisma Client after schema changes.
 
